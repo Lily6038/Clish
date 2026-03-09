@@ -3,8 +3,6 @@ package net.clish.api;
 import net.clish.ast.ClishLibrary;
 
 import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Block selection API for querying block data.
@@ -23,11 +21,6 @@ public class BlockApi {
         @Override
         public Object call(List<Object> args) {
             // TODO: Implement via Minecraft client
-            Map<String, Object> block = new HashMap<>();
-            block.put("id", "minecraft:air");
-            block.put("x", 0);
-            block.put("y", 0);
-            block.put("z", 0);
             return "Block API requires Minecraft runtime";
         }
     }
