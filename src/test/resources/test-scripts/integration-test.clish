@@ -1,0 +1,72 @@
+# Integration test script for runtime testing
+# Tests string and math libraries (work without Minecraft runtime)
+
+echo "Starting integration tests..."
+
+# Test string library
+echo "Testing string.length..."
+local len = string.length("hello")
+if (len == 5) then
+    echo "  PASS: string.length('hello') = 5"
+else
+    echo "  FAIL: expected 5, got " + len
+end
+
+echo "Testing string.substring..."
+local sub = string.substring("hello", 1, 4)
+if (sub == "ell") then
+    echo "  PASS: string.substring('hello', 1, 4) = 'ell'"
+else
+    echo "  FAIL: expected 'ell', got " + sub
+end
+
+echo "Testing string.replace..."
+local rep = string.replace("hello world", "world", "there")
+if (rep == "hello there") then
+    echo "  PASS: string.replace works"
+else
+    echo "  FAIL: expected 'hello there', got " + rep
+end
+
+echo "Testing string.toUpperCase..."
+local upper = string.toUpperCase("hello")
+if (upper == "HELLO") then
+    echo "  PASS: string.toUpperCase works"
+else
+    echo "  FAIL: expected 'HELLO', got " + upper
+end
+
+echo "Testing string.toLowerCase..."
+local lower = string.toLowerCase("HELLO")
+if (lower == "hello") then
+    echo "  PASS: string.toLowerCase works"
+else
+    echo "  FAIL: expected 'hello', got " + lower
+end
+
+# Test math library
+echo "Testing math.abs..."
+local absVal = math.abs(-5)
+if (absVal == 5) then
+    echo "  PASS: math.abs(-5) = 5"
+else
+    echo "  FAIL: expected 5, got " + absVal
+end
+
+echo "Testing math.sqrt..."
+local sq = math.sqrt(16)
+if (sq == 4) then
+    echo "  PASS: math.sqrt(16) = 4"
+else
+    echo "  FAIL: expected 4, got " + sq
+end
+
+echo "Testing math.max..."
+local mx = math.max(3, 7)
+if (mx == 7) then
+    echo "  PASS: math.max(3, 7) = 7"
+else
+    echo "  FAIL: expected 7, got " + mx
+end
+
+echo "Integration tests complete!"
