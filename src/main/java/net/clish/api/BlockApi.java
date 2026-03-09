@@ -2,12 +2,16 @@ package net.clish.api;
 
 import net.clish.ast.ClishLibrary;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 
 /**
  * Block selection API for querying block data.
  */
 public class BlockApi {
+    private static final Logger LOGGER = LoggerFactory.getLogger("Clish");
 
     /**
      * Get block at position.
@@ -20,7 +24,8 @@ public class BlockApi {
 
         @Override
         public Object call(List<Object> args) {
-            // TODO: Implement via Minecraft client
+            LOGGER.debug("BlockApi.{} called with args: {}", getName(), args);
+            // TODO: Add MinecraftClient.getInstance().isInGame() check
             return "Block API requires Minecraft runtime";
         }
     }
@@ -36,7 +41,8 @@ public class BlockApi {
 
         @Override
         public Object call(List<Object> args) {
-            // TODO: Implement via Minecraft client
+            LOGGER.debug("BlockApi.{} called with args: {}", getName(), args);
+            // TODO: Add MinecraftClient.getInstance().isInGame() check
             return "Block NBT requires Minecraft runtime";
         }
     }
@@ -52,7 +58,8 @@ public class BlockApi {
 
         @Override
         public Object call(List<Object> args) {
-            // TODO: Implement via Minecraft client
+            LOGGER.debug("BlockApi.{} called with args: {}", getName(), args);
+            // TODO: Add MinecraftClient.getInstance().isInGame() check
             return "Block API requires Minecraft runtime";
         }
     }
@@ -68,7 +75,8 @@ public class BlockApi {
 
         @Override
         public Object call(List<Object> args) {
-            // TODO: Implement via Minecraft client
+            LOGGER.debug("BlockApi.{} called with args: {}", getName(), args);
+            // TODO: Add MinecraftClient.getInstance().isInGame() check
             return "Block API requires Minecraft runtime";
         }
     }

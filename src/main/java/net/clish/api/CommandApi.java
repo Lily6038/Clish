@@ -2,12 +2,16 @@ package net.clish.api;
 
 import net.clish.ast.ClishLibrary;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 
 /**
  * Command execution API for running Minecraft commands from scripts.
  */
 public class CommandApi {
+    private static final Logger LOGGER = LoggerFactory.getLogger("Clish");
 
     /**
      * Execute a Minecraft command.
@@ -20,11 +24,11 @@ public class CommandApi {
 
         @Override
         public Object call(List<Object> args) {
+            LOGGER.debug("CommandApi.{} called with args: {}", getName(), args);
             if (args.isEmpty()) return null;
 
             String command = args.get(0).toString();
             // TODO: Implement actual command execution via Minecraft client
-            System.out.println("[Command] " + command);
             return "Command execution requires Minecraft runtime";
         }
     }
@@ -40,6 +44,7 @@ public class CommandApi {
 
         @Override
         public Object call(List<Object> args) {
+            LOGGER.debug("CommandApi.{} called with args: {}", getName(), args);
             if (args.isEmpty()) return null;
 
             String command = args.get(0).toString();

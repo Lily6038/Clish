@@ -2,12 +2,16 @@ package net.clish.api;
 
 import net.clish.ast.ClishLibrary;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 
 /**
  * Input simulation API for simulating mouse/keyboard input.
  */
 public class InputApi {
+    private static final Logger LOGGER = LoggerFactory.getLogger("Clish");
 
     /**
      * Simulate left click.
@@ -20,8 +24,8 @@ public class InputApi {
 
         @Override
         public Object call(List<Object> args) {
+            LOGGER.debug("InputApi.{} called with args: {}", getName(), args);
             // TODO: Implement via Mixin
-            System.out.println("[Input] Left click");
             return "Input simulation requires Minecraft runtime";
         }
     }
@@ -37,8 +41,8 @@ public class InputApi {
 
         @Override
         public Object call(List<Object> args) {
+            LOGGER.debug("InputApi.{} called with args: {}", getName(), args);
             // TODO: Implement via Mixin
-            System.out.println("[Input] Right click");
             return "Input simulation requires Minecraft runtime";
         }
     }
@@ -54,8 +58,8 @@ public class InputApi {
 
         @Override
         public Object call(List<Object> args) {
+            LOGGER.debug("InputApi.{} called with args: {}", getName(), args);
             // TODO: Implement via Mixin
-            System.out.println("[Input] Mouse move");
             return "Input simulation requires Minecraft runtime";
         }
     }
@@ -71,9 +75,9 @@ public class InputApi {
 
         @Override
         public Object call(List<Object> args) {
+            LOGGER.debug("InputApi.{} called with args: {}", getName(), args);
             // TODO: Implement via Mixin
             if (args.isEmpty()) return "Key code required";
-            System.out.println("[Input] Key press: " + args.get(0));
             return "Input simulation requires Minecraft runtime";
         }
     }
@@ -89,9 +93,9 @@ public class InputApi {
 
         @Override
         public Object call(List<Object> args) {
+            LOGGER.debug("InputApi.{} called with args: {}", getName(), args);
             // TODO: Implement via Mixin
             if (args.isEmpty()) return "Text required";
-            System.out.println("[Input] Type text: " + args.get(0));
             return "Input simulation requires Minecraft runtime";
         }
     }

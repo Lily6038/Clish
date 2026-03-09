@@ -2,6 +2,9 @@ package net.clish.api;
 
 import net.clish.ast.ClishLibrary;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
@@ -10,6 +13,7 @@ import java.util.Map;
  * Player API for accessing player data.
  */
 public class PlayerApi {
+    private static final Logger LOGGER = LoggerFactory.getLogger("Clish");
 
     /**
      * Get player X position.
@@ -22,7 +26,8 @@ public class PlayerApi {
 
         @Override
         public Object call(List<Object> args) {
-            // TODO: Implement via Minecraft client
+            LOGGER.debug("PlayerApi.{} called with args: {}", getName(), args);
+            // TODO: Add MinecraftClient.getInstance().isInGame() check
             return "Player API requires Minecraft runtime";
         }
     }
@@ -38,6 +43,8 @@ public class PlayerApi {
 
         @Override
         public Object call(List<Object> args) {
+            LOGGER.debug("PlayerApi.{} called with args: {}", getName(), args);
+            // TODO: Add MinecraftClient.getInstance().isInGame() check
             return "Player API requires Minecraft runtime";
         }
     }
@@ -53,6 +60,8 @@ public class PlayerApi {
 
         @Override
         public Object call(List<Object> args) {
+            LOGGER.debug("PlayerApi.{} called with args: {}", getName(), args);
+            // TODO: Add MinecraftClient.getInstance().isInGame() check
             return "Player API requires Minecraft runtime";
         }
     }
@@ -68,6 +77,8 @@ public class PlayerApi {
 
         @Override
         public Object call(List<Object> args) {
+            LOGGER.debug("PlayerApi.{} called with args: {}", getName(), args);
+            // TODO: Add MinecraftClient.getInstance().isInGame() check
             return "Player API requires Minecraft runtime";
         }
     }
@@ -83,6 +94,8 @@ public class PlayerApi {
 
         @Override
         public Object call(List<Object> args) {
+            LOGGER.debug("PlayerApi.{} called with args: {}", getName(), args);
+            // TODO: Add MinecraftClient.getInstance().isInGame() check
             return "Player API requires Minecraft runtime";
         }
     }
@@ -98,6 +111,8 @@ public class PlayerApi {
 
         @Override
         public Object call(List<Object> args) {
+            LOGGER.debug("PlayerApi.{} called with args: {}", getName(), args);
+            // TODO: Add MinecraftClient.getInstance().isInGame() check
             return "Player API requires Minecraft runtime";
         }
     }
@@ -113,6 +128,8 @@ public class PlayerApi {
 
         @Override
         public Object call(List<Object> args) {
+            LOGGER.debug("PlayerApi.{} called with args: {}", getName(), args);
+            // TODO: Add MinecraftClient.getInstance().isInGame() check
             return "Player API requires Minecraft runtime";
         }
     }

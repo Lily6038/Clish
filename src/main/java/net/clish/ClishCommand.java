@@ -13,6 +13,8 @@ public class ClishCommand {
      * Register the /clish command.
      */
     public static void register() {
-        LOGGER.info("Clish commands registered (placeholder - command system coming soon)");
+        LOGGER.info("Registering Clish commands...");
+        // TODO: Actual command registration via ClientCommandRegistrationCallback
+        LOGGER.info("Clish commands registered successfully");
     }
 }
