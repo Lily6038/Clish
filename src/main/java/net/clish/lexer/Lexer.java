@@ -45,7 +45,7 @@ public class Lexer {
         Token token;
         do {
             token = nextToken();
-            if (token.getType() != TokenType.NEWLINE && token.getType() != TokenType.COMMENT) {
+            if (token.getType() != TokenType.NEWLINE && token.getType() != TokenType.COMMENT && token.getType() != TokenType.EOF) {
                 tokens.add(token);
             }
         } while (token.getType() != TokenType.EOF);

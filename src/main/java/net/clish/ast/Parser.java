@@ -538,7 +538,7 @@ public class Parser {
     }
 
     private boolean isAtEnd() {
-        return peek().getType() == TokenType.EOF;
+        return current >= tokens.size() || peek().getType() == TokenType.EOF;
     }
 
     private Token peek() {
