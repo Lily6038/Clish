@@ -1,0 +1,14 @@
+{
+    "java.configuration.runtimes": [
+        {
+            "name": "JavaSE-21",
+            "path": "/usr/lib/jvm/java-21-openjdk-amd64",
+            "default": true
+        }
+    ],
+    "java.home": "/usr/lib/jvm/java-21-openjdk-amd64",
+    "files.associations": {
+        "*.mixins": "java"
+    },
+    "java.configuration.updateBuildConfiguration": "interactive"
+}

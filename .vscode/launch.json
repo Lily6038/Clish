@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug runClient",
+            "request": "launch",
+            "mainClass": "net.fabricmc.loader.impl.launch.knot.KnotClient",
+            "projectName": "clish",
+            "console": "integratedTerminal",
+            "vmArgs": "-Xmx2G"
+        },
+        {
+            "type": "java",
+            "name": "Attach to Minecraft",
+            "request": "attach",
+            "projectName": "clish",
+            "hostName": "localhost",
+            "port": 5005
+        }
+    ]
+}

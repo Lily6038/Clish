@@ -77,16 +77,34 @@ The mod follows a layered architecture:
 
 ## Debugging
 
-This section covers the debugging workflow for developing the Clish mod.
+This section covers the debugging workflow for developing the Clish mod using VS Code.
 
-### IDE Setup
+### VS Code Setup
 
-**Recommended IDE**: IntelliJ IDEA (Community or Ultimate)
+#### Required Extensions
 
-1. Open the project in IntelliJ IDEA
-2. Select "Open" and choose the `build.gradle` file
-3. Wait for Fabric Loom to configure automatically
-4. Ensure Java 21 is set in Project Structure → SDKs
+Install these extensions from the VS Code Marketplace:
+
+1. **Extension Pack for Java** - Java language support, debugging, and project management
+2. **Debugger for Java** - Advanced Java debugging features
+3. **Minecraft Development** (optional) - Fabric modding support, Mixin highlighting
+
+#### Project Import
+
+1. Open VS Code in the project directory
+2. Install Java 21 JDK if not already installed
+3. Set Java home in VS Code settings:
+   ```json
+   "java.configuration.runtimes": [
+     {
+       "name": "JavaSE-21",
+       "path": "/path/to/jdk-21",
+       "default": true
+     }
+   ]
+   ```
+4. Wait for Java Language Server to index the project
+5. Run `./gradlew genSourcesWithVineflower` to download Minecraft sources
 
 The project includes `com.demonwav.mcdev:annotations` which provides:
 - `@Mixin` annotation highlighting
@@ -95,31 +113,89 @@ The project includes `com.demonwav.mcdev:annotations` which provides:
 
 ### Debugging Methods
 
-#### Local Debugging (Recommended)
+#### Method 1: VS Code Debug Configuration (Recommended)
 
-1. **Create Run Configuration**:
-   - Run → Edit Configurations → Add "Gradle"
-   - Task: `runClient`
-   - Working directory: Project root
-
-2. **Enable Debugging**:
-   - In the same configuration, check "Enable debug"
-   - Port: 5005 (default)
-
-3. **Start Debugging**:
-   - Set breakpoints in code
-   - Run the configuration in debug mode
-
-#### Remote Debugging
-
-Add to `gradle.properties`:
-```properties
-org.gradle.jvmargs=-Xmx2G -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+Create `.vscode/launch.json`:
+```json
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Debug runClient",
+            "request": "launch",
+            "mainClass": "net.fabricmc.loader.impl.launch.knot.KnotClient",
+            "projectName": "clish",
+            "console": "integratedTerminal",
+            "vmArgs": "-Xmx2G"
+        },
+        {
+            "type": "java",
+            "name": "Attach to Minecraft",
+            "request": "attach",
+            "projectName": "clish",
+            "hostName": "localhost",
+            "port": 5005
+        }
+    ]
+}
 ```
 
-Then run `./gradlew runClient` and attach IntelliJ's remote debugger to `localhost:5005`.
+Create `.vscode/tasks.json`:
+```json
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "runClient",
+            "type": "shell",
+            "command": "./gradlew runClient",
+            "group": "build",
+            "problemMatcher": []
+        },
+        {
+            "label": "genSources",
+            "type": "shell",
+            "command": "./gradlew genSourcesWithVineflower",
+            "problemMatcher": []
+        }
+    ]
+}
+```
 
-#### Logging
+**To debug:**
+1. First, add debug arguments to `gradle.properties`:
+   ```properties
+   org.gradle.jvmargs=-Xmx2G -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+   ```
+2. Run `./gradlew runClient` in terminal
+3. Press F5 and select "Attach to Minecraft"
+4. Set breakpoints in your code
+
+#### Method 2: Terminal + VS Code Debug
+
+1. Modify `gradle.properties` to enable debugging:
+   ```properties
+   org.gradle.jvmargs=-Xmx2G -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+   ```
+
+2. Run the game:
+   ```bash
+   ./gradlew runClient
+   ```
+
+3. In VS Code, press F5 → "Attach to Java Process" → Select the Minecraft process
+
+#### Debug Console
+
+When debugging:
+- **VARIABLES** panel - View local variables and watch expressions
+- **CALL STACK** panel - See method call hierarchy
+- **BREAKPOINTS** panel - Manage all breakpoints
+- Hover over variables to see their values
+- Right-click → "Watch" to add expressions
+
+### Logging
 
 Use Fabric's logger in your code:
 ```java
@@ -146,9 +222,23 @@ public class Example {
 | Issue | Solution |
 |-------|----------|
 | "Cannot find Mixin target" | Run `./gradlew genSourcesWithVineflower` |
-| "Port already in use" | Kill existing Java processes or change debug port |
+| "Port already in use" | Kill existing Java processes or change debug port in launch.json |
 | "ClassNotFoundException" | Rebuild with `./gradlew build` |
 | Mod not loading | Check `run/logs/` for errors |
+| No Minecraft sources | Run `./gradlew genSourcesWithVineflower` |
+| Java not found | Set `java.configuration.runtimes` in VS Code settings |
+
+### Quick Reference
+
+| Action | Command/Shortcut |
+|--------|------------------|
+| Start debugging | F5 |
+| Toggle breakpoint | F9 |
+| Step over | F10 |
+| Step into | F11 |
+| Step out | Shift+F11 |
+| Stop debugging | Shift+F5 |
+| Open debug console | Debug → Debug Console |
 
 ### Hot Reloading
 
