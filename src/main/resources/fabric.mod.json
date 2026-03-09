@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "clish",
+	"version": "${version}",
+	"name": "Clish",
+	"description": "A Minecraft mod that allows players to create, edit, and execute shell-like scripts.",
+	"authors": [
+		"Clish Team"
+	],
+	"contact": {
+		"homepage": "https://github.com/clish/clish",
+		"sources": "https://github.com/clish/clish"
+	},
+	"license": "MIT",
+	"icon": "assets/clish/icon.png",
+	"entrypoints": {
+		"main": [
+			"net.clish.Clish"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.18.1",
+		"fabric-api": "*",
+		"minecraft": "1.21.11",
+		"java": ">=21"
+	},
+	"suggests": {
+		"another-mod": "*"
+	},
+	"custom": {
+		"modmenu": {
+			"badges": ["library"],
+			"links": {
+				"modmenu.discord": "https://discord.gg/clish"
+			}
+		}
+	}
+}

@@ -29,7 +29,7 @@ Clish is a Minecraft 1.21.11 Fabric client-side mod that allows players to creat
 │  (string, math, regex, time, nbt)             │
 ├─────────────────────────────────────────────────┤
 │  Layer 3: Game API Bridge                     │
-│  (Player data, input simulation)              │
+│  (Player, entity, block, input simulation)    │
 ├─────────────────────────────────────────────────┤
 │  Layer 4: Configuration & UI                   │
 │  (Config, text editor, docs)                  │
@@ -53,6 +53,8 @@ Clish is a Minecraft 1.21.11 Fabric client-side mod that allows players to creat
 
 ### Layer 3: Game API Bridge
 - [ ] Player data APIs (position, health, inventory)
+- [ ] Entity selection API (Minecraft selector syntax like `@e[distance=..5, limit=2, type=item]`)
+- [ ] Block selection API (position syntax like `254 64 -128`)
 - [ ] Input simulation APIs (click, mouse)
 - [ ] Command execution integration
 
