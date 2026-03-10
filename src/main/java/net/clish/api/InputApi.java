@@ -9,6 +9,10 @@ import java.util.List;
 
 /**
  * Input simulation API for simulating mouse/keyboard input.
+ *
+ * NOTE: Full implementation requires Mixin-based input simulation which depends on
+ * resolving clientarguments dependency and proper Minecraft runtime integration.
+ * Current implementation returns placeholder responses.
  */
 public class InputApi {
     private static final Logger LOGGER = LoggerFactory.getLogger("Clish");
@@ -25,7 +29,7 @@ public class InputApi {
         @Override
         public Object call(List<Object> args) {
             LOGGER.debug("InputApi.{} called with args: {}", getName(), args);
-            // TODO: Implement via Mixin
+            // TODO: Implement via Mixin - depends on clientarguments resolution
             return "Input simulation requires Minecraft runtime";
         }
     }
@@ -42,7 +46,7 @@ public class InputApi {
         @Override
         public Object call(List<Object> args) {
             LOGGER.debug("InputApi.{} called with args: {}", getName(), args);
-            // TODO: Implement via Mixin
+            // TODO: Implement via Mixin - depends on clientarguments resolution
             return "Input simulation requires Minecraft runtime";
         }
     }
@@ -59,7 +63,7 @@ public class InputApi {
         @Override
         public Object call(List<Object> args) {
             LOGGER.debug("InputApi.{} called with args: {}", getName(), args);
-            // TODO: Implement via Mixin
+            // TODO: Implement via Mixin - depends on clientarguments resolution
             return "Input simulation requires Minecraft runtime";
         }
     }
@@ -76,7 +80,7 @@ public class InputApi {
         @Override
         public Object call(List<Object> args) {
             LOGGER.debug("InputApi.{} called with args: {}", getName(), args);
-            // TODO: Implement via Mixin
+            // TODO: Implement via Mixin - depends on clientarguments resolution
             if (args.isEmpty()) return "Key code required";
             return "Input simulation requires Minecraft runtime";
         }
@@ -94,7 +98,7 @@ public class InputApi {
         @Override
         public Object call(List<Object> args) {
             LOGGER.debug("InputApi.{} called with args: {}", getName(), args);
-            // TODO: Implement via Mixin
+            // TODO: Implement via Mixin - depends on clientarguments resolution
             if (args.isEmpty()) return "Text required";
             return "Input simulation requires Minecraft runtime";
         }

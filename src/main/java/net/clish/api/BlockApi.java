@@ -1,17 +1,18 @@
 package net.clish.api;
 
 import net.clish.ast.ClishLibrary;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.List;
 
 /**
- * Block selection API for querying block data.
+ * Block selection API for querying block data from Minecraft.
  */
 public class BlockApi {
-    private static final Logger LOGGER = LoggerFactory.getLogger("Clish");
+    private static final Minecraft mc = Minecraft.getInstance();
 
     /**
      * Get block at position.
@@ -24,14 +25,23 @@ public class BlockApi {
 
         @Override
         public Object call(List<Object> args) {
-            LOGGER.debug("BlockApi.{} called with args: {}", getName(), args);
-            // TODO: Add MinecraftClient.getInstance().isInGame() check
-            return "Block API requires Minecraft runtime";
+            if (args.size() < 3) return null;
+
+            if (mc.level == null) return null;
+
+            int x = ((Number) args.get(0)).intValue();
+            int y = ((Number) args.get(1)).intValue();
+            int z = ((Number) args.get(2)).intValue();
+
+            BlockPos pos = new BlockPos(x, y, z);
+            BlockState state = mc.level.getBlockState(pos);
+
+            return state.getBlock().toString();
         }
     }
 
     /**
-     * Get block NBT.
+     * Get block NBT at position.
      */
     public static class GetNbt implements ClishLibrary {
         @Override
@@ -41,14 +51,24 @@ public class BlockApi {
 
         @Override
         public Object call(List<Object> args) {
-            LOGGER.debug("BlockApi.{} called with args: {}", getName(), args);
-            // TODO: Add MinecraftClient.getInstance().isInGame() check
-            return "Block NBT requires Minecraft runtime";
+            if (args.size() < 3) return null;
+
+            if (mc.level == null) return null;
+
+            int x = ((Number) args.get(0)).intValue();
+            int y = ((Number) args.get(1)).intValue();
+            int z = ((Number) args.get(2)).intValue();
+
+            BlockPos pos = new BlockPos(x, y, z);
+            BlockEntity blockEntity = mc.level.getBlockEntity(pos);
+
+            if (blockEntity == null) return null;
+            return "BlockEntity at " + x + "," + y + "," + z;
         }
     }
 
     /**
-     * Check if block exists.
+     * Check if block exists (is loaded).
      */
     public static class Exists implements ClishLibrary {
         @Override
@@ -58,9 +78,16 @@ public class BlockApi {
 
         @Override
         public Object call(List<Object> args) {
-            LOGGER.debug("BlockApi.{} called with args: {}", getName(), args);
-            // TODO: Add MinecraftClient.getInstance().isInGame() check
-            return "Block API requires Minecraft runtime";
+            if (args.size() < 3) return false;
+
+            if (mc.level == null) return false;
+
+            int x = ((Number) args.get(0)).intValue();
+            int y = ((Number) args.get(1)).intValue();
+            int z = ((Number) args.get(2)).intValue();
+
+            BlockPos pos = new BlockPos(x, y, z);
+            return !mc.level.getBlockState(pos).isAir();
         }
     }
 
@@ -75,9 +102,40 @@ public class BlockApi {
 
         @Override
         public Object call(List<Object> args) {
-            LOGGER.debug("BlockApi.{} called with args: {}", getName(), args);
-            // TODO: Add MinecraftClient.getInstance().isInGame() check
-            return "Block API requires Minecraft runtime";
+            if (args.size() < 3) return 0;
+
+            if (mc.level == null) return 0;
+
+            int x = ((Number) args.get(0)).intValue();
+            int y = ((Number) args.get(1)).intValue();
+            int z = ((Number) args.get(2)).intValue();
+
+            BlockPos pos = new BlockPos(x, y, z);
+            return mc.level.getLightEngine().getRawBrightness(pos, 0);
+        }
+    }
+
+    /**
+     * Get block sky light level.
+     */
+    public static class GetSkyLight implements ClishLibrary {
+        @Override
+        public String getName() {
+            return "block.sky";
+        }
+
+        @Override
+        public Object call(List<Object> args) {
+            if (args.size() < 3) return 0;
+
+            if (mc.level == null) return 0;
+
+            int x = ((Number) args.get(0)).intValue();
+            int y = ((Number) args.get(1)).intValue();
+            int z = ((Number) args.get(2)).intValue();
+
+            BlockPos pos = new BlockPos(x, y, z);
+            return mc.level.getLightEngine().getRawBrightness(pos, 0);
         }
     }
 
@@ -89,7 +147,8 @@ public class BlockApi {
             new GetBlock(),
             new GetNbt(),
             new Exists(),
-            new GetLight()
+            new GetLight(),
+            new GetSkyLight()
         );
     }
 }

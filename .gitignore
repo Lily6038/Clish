@@ -13,6 +13,7 @@ build/
 # Run directories
 run/
 .minecraft/
+bin/
 
 # OS
 .DS_Store

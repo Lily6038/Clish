@@ -1,7 +1,6 @@
 package net.clish;
 
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.api.ClientModInitializer;
 import net.clish.ast.ClishLibrary;
 import net.clish.builtin.Builtins;
 import net.clish.builtin.StringLibrary;
@@ -9,12 +8,14 @@ import net.clish.builtin.MathLibrary;
 import net.clish.builtin.RegexLibrary;
 import net.clish.builtin.TimeLibrary;
 import net.clish.builtin.NbtLibrary;
+import net.clish.api.PlayerApi;
+import net.clish.api.BlockApi;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-public class Clish implements ModInitializer, ClientModInitializer {
+public class Clish implements ModInitializer {
     private static Clish instance;
 
     private final net.clish.ast.ScriptEngine scriptEngine;
@@ -45,20 +46,17 @@ public class Clish implements ModInitializer, ClientModInitializer {
         for (ClishLibrary lib : NbtLibrary.getAll()) {
             scriptEngine.registerLibrary(lib.getName(), lib);
         }
+        for (ClishLibrary lib : PlayerApi.getAll()) {
+            scriptEngine.registerLibrary(lib.getName(), lib);
+        }
+        for (ClishLibrary lib : BlockApi.getAll()) {
+            scriptEngine.registerLibrary(lib.getName(), lib);
+        }
     }
 
     @Override
     public void onInitialize() {
         System.out.println("Clish mod initialized!");
-    }
-
-    @Override
-    public void onInitializeClient() {
-        // Register commands on client side
-        ClishCommand.register();
-        // Register keybinds
-        ClishKeybinds.register();
-        System.out.println("Clish client initialized!");
     }
 
     /**

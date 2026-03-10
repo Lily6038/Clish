@@ -5,17 +5,19 @@
 	"name": "Clish",
 	"description": "A Minecraft mod that allows players to create, edit, and execute shell-like scripts.",
 	"authors": [
-		"Clish Team"
+		"Lily6038"
 	],
 	"contact": {
-		"homepage": "https://github.com/clish/clish",
-		"sources": "https://github.com/clish/clish"
+		"sources": "https://github.com/Lily6038/clish"
 	},
 	"license": "MIT",
 	"icon": "assets/clish/icon.png",
 	"entrypoints": {
-		"main": [
-			"net.clish.Clish"
+		"client": [
+			"net.clish.ClishClient"
+		],
+		"modmenu": [
+			"net.clish.ClishModMenuIntegration"
 		]
 	},
 	"depends": {
@@ -24,15 +26,15 @@
 		"minecraft": "1.21.11",
 		"java": ">=21"
 	},
+	"recommends": {
+		"modmenu": ">=6.3.0"
+	},
 	"suggests": {
 		"another-mod": "*"
 	},
 	"custom": {
 		"modmenu": {
-			"badges": ["library"],
-			"links": {
-				"modmenu.discord": "https://discord.gg/clish"
-			}
+			"badges": []
 		}
 	}
 }

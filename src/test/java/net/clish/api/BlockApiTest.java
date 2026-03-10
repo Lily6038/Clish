@@ -7,31 +7,35 @@ import java.util.List;
 class BlockApiTest {
 
     @Test
-    void testGetBlockReturnsPlaceholder() {
+    void testGetBlockRequiresThreeArgs() {
         BlockApi.GetBlock fn = new BlockApi.GetBlock();
+        // With no args, should return null (no Minecraft)
         Object result = fn.call(List.of());
-        assertEquals("Block API requires Minecraft runtime", result);
+        assertNull(result);
     }
 
     @Test
-    void testGetNbtReturnsPlaceholder() {
+    void testGetNbtRequiresThreeArgs() {
         BlockApi.GetNbt fn = new BlockApi.GetNbt();
+        // With no args, should return null
         Object result = fn.call(List.of());
-        assertEquals("Block NBT requires Minecraft runtime", result);
+        assertNull(result);
     }
 
     @Test
-    void testExistsReturnsPlaceholder() {
+    void testExistsRequiresThreeArgs() {
         BlockApi.Exists fn = new BlockApi.Exists();
+        // With no args, should return false
         Object result = fn.call(List.of());
-        assertEquals("Block API requires Minecraft runtime", result);
+        assertEquals(false, result);
     }
 
     @Test
-    void testGetLightReturnsPlaceholder() {
+    void testGetLightRequiresThreeArgs() {
         BlockApi.GetLight fn = new BlockApi.GetLight();
+        // With no args, should return 0
         Object result = fn.call(List.of());
-        assertEquals("Block API requires Minecraft runtime", result);
+        assertEquals(0, result);
     }
 
     @Test
@@ -40,5 +44,6 @@ class BlockApiTest {
         assertEquals("block.nbt", new BlockApi.GetNbt().getName());
         assertEquals("block.exists", new BlockApi.Exists().getName());
         assertEquals("block.light", new BlockApi.GetLight().getName());
+        assertEquals("block.sky", new BlockApi.GetSkyLight().getName());
     }
 }

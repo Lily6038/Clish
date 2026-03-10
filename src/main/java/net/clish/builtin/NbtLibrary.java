@@ -9,8 +9,8 @@ import java.util.List;
  * NBT (Named Binary Tag) library for Clish.
  * Provides functions to read and manipulate NBT data.
  *
- * Note: This is a basic implementation. Full NBT support requires
- * integration with Minecraft's NBT system.
+ * Note: Full Minecraft NBT integration requires runtime. Currently uses HashMap-based
+ * implementation for script operations.
  */
 public class NbtLibrary {
 

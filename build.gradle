@@ -30,9 +30,11 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	productionRuntimeMods "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	// Optional dependencies (uncomment as needed)
+	// Optional dependencies (clientarguments for entity selectors - temporarily disabled until needed)
 	// include modImplementation("dev.xpple:clientarguments:${project.clientarguments_version}")
-	// include modImplementation("dev.xpple:betterconfig-fabric:${project.betterconfig_version}")
+
+	// Mod Menu integration (local file)
+	modApi(files("run/mods/modmenu-17.0.0-beta.2.jar"))
 
 	compileOnly 'com.demonwav.mcdev:annotations:2.0.0'
 

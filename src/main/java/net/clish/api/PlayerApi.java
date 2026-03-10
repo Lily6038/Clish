@@ -1,19 +1,16 @@
 package net.clish.api;
 
 import net.clish.ast.ClishLibrary;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 
 import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
- * Player API for accessing player data.
+ * Player API for accessing player data from Minecraft.
  */
 public class PlayerApi {
-    private static final Logger LOGGER = LoggerFactory.getLogger("Clish");
+    private static final Minecraft mc = Minecraft.getInstance();
 
     /**
      * Get player X position.
@@ -26,9 +23,9 @@ public class PlayerApi {
 
         @Override
         public Object call(List<Object> args) {
-            LOGGER.debug("PlayerApi.{} called with args: {}", getName(), args);
-            // TODO: Add MinecraftClient.getInstance().isInGame() check
-            return "Player API requires Minecraft runtime";
+            LocalPlayer player = mc.player;
+            if (player == null) return null;
+            return player.getX();
         }
     }
 
@@ -43,9 +40,9 @@ public class PlayerApi {
 
         @Override
         public Object call(List<Object> args) {
-            LOGGER.debug("PlayerApi.{} called with args: {}", getName(), args);
-            // TODO: Add MinecraftClient.getInstance().isInGame() check
-            return "Player API requires Minecraft runtime";
+            LocalPlayer player = mc.player;
+            if (player == null) return null;
+            return player.getY();
         }
     }
 
@@ -60,9 +57,9 @@ public class PlayerApi {
 
         @Override
         public Object call(List<Object> args) {
-            LOGGER.debug("PlayerApi.{} called with args: {}", getName(), args);
-            // TODO: Add MinecraftClient.getInstance().isInGame() check
-            return "Player API requires Minecraft runtime";
+            LocalPlayer player = mc.player;
+            if (player == null) return null;
+            return player.getZ();
         }
     }
 
@@ -77,9 +74,9 @@ public class PlayerApi {
 
         @Override
         public Object call(List<Object> args) {
-            LOGGER.debug("PlayerApi.{} called with args: {}", getName(), args);
-            // TODO: Add MinecraftClient.getInstance().isInGame() check
-            return "Player API requires Minecraft runtime";
+            LocalPlayer player = mc.player;
+            if (player == null) return null;
+            return player.getHealth();
         }
     }
 
@@ -94,9 +91,9 @@ public class PlayerApi {
 
         @Override
         public Object call(List<Object> args) {
-            LOGGER.debug("PlayerApi.{} called with args: {}", getName(), args);
-            // TODO: Add MinecraftClient.getInstance().isInGame() check
-            return "Player API requires Minecraft runtime";
+            LocalPlayer player = mc.player;
+            if (player == null) return null;
+            return player.getFoodData().getFoodLevel();
         }
     }
 
@@ -111,14 +108,14 @@ public class PlayerApi {
 
         @Override
         public Object call(List<Object> args) {
-            LOGGER.debug("PlayerApi.{} called with args: {}", getName(), args);
-            // TODO: Add MinecraftClient.getInstance().isInGame() check
-            return "Player API requires Minecraft runtime";
+            LocalPlayer player = mc.player;
+            if (player == null) return null;
+            return player.level().dimension().toString();
         }
     }
 
     /**
-     * Get player inventory.
+     * Get player inventory as list of item names.
      */
     public static class GetInventory implements ClishLibrary {
         @Override
@@ -128,9 +125,71 @@ public class PlayerApi {
 
         @Override
         public Object call(List<Object> args) {
-            LOGGER.debug("PlayerApi.{} called with args: {}", getName(), args);
-            // TODO: Add MinecraftClient.getInstance().isInGame() check
-            return "Player API requires Minecraft runtime";
+            LocalPlayer player = mc.player;
+            if (player == null) return null;
+
+            List<String> items = new java.util.ArrayList<>();
+            for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+                var item = player.getInventory().getItem(i);
+                if (!item.isEmpty()) {
+                    items.add(item.getItem().toString());
+                }
+            }
+            return items;
+        }
+    }
+
+    /**
+     * Get player's held item name.
+     */
+    public static class GetHeldItem implements ClishLibrary {
+        @Override
+        public String getName() {
+            return "player.heldItem";
+        }
+
+        @Override
+        public Object call(List<Object> args) {
+            LocalPlayer player = mc.player;
+            if (player == null) return null;
+
+            var item = player.getMainHandItem();
+            if (item.isEmpty()) return "";
+            return item.getItem().toString();
+        }
+    }
+
+    /**
+     * Get player yaw rotation.
+     */
+    public static class GetYaw implements ClishLibrary {
+        @Override
+        public String getName() {
+            return "player.yaw";
+        }
+
+        @Override
+        public Object call(List<Object> args) {
+            LocalPlayer player = mc.player;
+            if (player == null) return null;
+            return player.getYRot();
+        }
+    }
+
+    /**
+     * Get player pitch rotation.
+     */
+    public static class GetPitch implements ClishLibrary {
+        @Override
+        public String getName() {
+            return "player.pitch";
+        }
+
+        @Override
+        public Object call(List<Object> args) {
+            LocalPlayer player = mc.player;
+            if (player == null) return null;
+            return player.getXRot();
         }
     }
 
@@ -145,7 +204,10 @@ public class PlayerApi {
             new GetHealth(),
             new GetFood(),
             new GetDimension(),
-            new GetInventory()
+            new GetInventory(),
+            new GetHeldItem(),
+            new GetYaw(),
+            new GetPitch()
         );
     }
 }
