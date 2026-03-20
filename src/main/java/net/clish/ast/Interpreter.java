@@ -3,6 +3,7 @@ package net.clish.ast;
 import net.clish.lexer.Token;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * AST Walker interpreter for Clish.
@@ -17,6 +18,7 @@ public class Interpreter {
     private long startTime;
     private long timeoutMs = 60000; // 60 seconds default
     private boolean interrupted = false;
+    private Consumer<String> outputConsumer;
 
     public Interpreter() {
         this.globalScope = new Scope(null);
@@ -271,7 +273,13 @@ public class Interpreter {
         }
 
         if (node instanceof IdentifierNode identifier) {
-            return scope.get(identifier.getName());
+            // First check scope for variables and user functions
+            Object value = scope.get(identifier.getName());
+            if (value != null) return value;
+            // Then check libraries for built-in functions
+            ClishLibrary library = libraries.get(identifier.getName());
+            if (library != null) return library;
+            return null;
         }
 
         if (node instanceof AssignmentNode assignment) {
@@ -479,6 +487,19 @@ public class Interpreter {
      */
     public void registerLibrary(String name, ClishLibrary library) {
         libraries.put(name, library);
+        if (outputConsumer != null) {
+            library.setOutputConsumer(outputConsumer);
+        }
+    }
+
+    /**
+     * Set the output consumer for library functions.
+     */
+    public void setOutputConsumer(Consumer<String> outputConsumer) {
+        this.outputConsumer = outputConsumer;
+        for (ClishLibrary library : libraries.values()) {
+            library.setOutputConsumer(outputConsumer);
+        }
     }
 
     /**

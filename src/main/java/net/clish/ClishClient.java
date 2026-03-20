@@ -1,6 +1,8 @@
 package net.clish;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.clish.ast.ClishLibrary;
 import net.clish.builtin.Builtins;
 import net.clish.builtin.StringLibrary;
@@ -51,6 +53,11 @@ public class ClishClient implements ClientModInitializer {
         ClishCommand.register();
         // Register keybinds
         ClishKeybinds.register();
+
+        // Register tick handler to flush output queue on main thread
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            ClishCommand.flushOutputQueue();
+        });
 
         System.out.println("Clish mod initialized!");
     }

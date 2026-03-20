@@ -13,9 +13,11 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
 
 /**
  * Main command registration for /clish command.
@@ -25,6 +27,41 @@ public class ClishCommand {
     private static final Path SCRIPTS_DIR = Paths.get("config/clish/scripts");
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
     private static Future<?> runningScript = null;
+
+    // Queue for output messages to be sent from background thread to main thread
+    private static final ConcurrentLinkedQueue<Component> outputQueue = new ConcurrentLinkedQueue<>();
+
+    /**
+     * Poll and send any queued output messages. Call this from the main thread tick.
+     */
+    public static void flushOutputQueue() {
+        Component msg;
+        while ((msg = outputQueue.poll()) != null) {
+            // Send directly to game - this must be called from main thread
+            ClishCommand.sendQueuedMessage(msg);
+        }
+    }
+
+    /**
+     * Stored command source for sending queued messages from main thread.
+     */
+    private static FabricClientCommandSource storedSource;
+
+    /**
+     * Set the command source for sending queued messages.
+     */
+    public static void setCommandSource(FabricClientCommandSource source) {
+        storedSource = source;
+    }
+
+    /**
+     * Send a queued message via the stored command source.
+     */
+    private static void sendQueuedMessage(Component msg) {
+        if (storedSource != null) {
+            storedSource.sendFeedback(msg);
+        }
+    }
 
     /**
      * Send message to player chat using direct Component API.
@@ -82,22 +119,31 @@ public class ClishCommand {
             String scriptSource = Files.readString(scriptPath);
             sendToChat(context, "§aRunning script: " + scriptName + "...");
 
-            // Run script asynchronously
+            // Store command source for output queue processing on main thread
+            setCommandSource(context.getSource());
+
+            // Create output consumer that queues messages for main thread processing
+            Consumer<String> outputConsumer = (output) -> {
+                outputQueue.offer(Component.literal("§7" + output));
+            };
+
+            // Run script asynchronously with output consumer
             net.clish.ast.ScriptEngine engine = ClishClient.getInstance().getScriptEngine();
+            engine.setOutputConsumer(outputConsumer);
+
             runningScript = executor.submit(() -> {
                 try {
-                    Object result = engine.execute(scriptSource);
-                    if (result != null) {
-                        LOGGER.info("Script result: {}", result);
-                    }
+                    engine.execute(scriptSource);
                 } catch (Exception e) {
-                    LOGGER.error("Script error: {}", e.getMessage());
+                    outputQueue.offer(Component.literal("§cError: " + e.getMessage()));
+                } finally {
+                    engine.setOutputConsumer(null);
                 }
             });
 
             return 1;
         } catch (Exception e) {
-            sendToChat(context, "§cError running script: " + e.getMessage());
+            sendToChat(context, "§cError: " + e.getMessage());
             return 0;
         }
     }

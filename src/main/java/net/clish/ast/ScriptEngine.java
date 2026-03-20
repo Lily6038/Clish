@@ -1,11 +1,14 @@
 package net.clish.ast;
 
+import java.util.function.Consumer;
+
 /**
  * Main script engine that ties together the lexer, parser, and interpreter.
  */
 public class ScriptEngine {
     private final Interpreter interpreter;
     private long timeoutMs = 60000;
+    private Consumer<String> outputConsumer;
 
     public ScriptEngine() {
         this.interpreter = new Interpreter();
@@ -41,6 +44,15 @@ public class ScriptEngine {
     public void setTimeout(long timeoutMs) {
         this.timeoutMs = timeoutMs;
         interpreter.setTimeout(timeoutMs);
+    }
+
+    /**
+     * Set the output consumer for library functions.
+     * @param outputConsumer consumer that receives output strings
+     */
+    public void setOutputConsumer(Consumer<String> outputConsumer) {
+        this.outputConsumer = outputConsumer;
+        interpreter.setOutputConsumer(outputConsumer);
     }
 
     /**

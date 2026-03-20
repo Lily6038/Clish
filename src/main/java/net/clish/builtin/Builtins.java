@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -14,10 +15,22 @@ import java.util.stream.Collectors;
  */
 public class Builtins {
 
+    private static Consumer<String> outputConsumer;
+
+    /**
+     * Set the output consumer for built-in print functions.
+     * @param consumer the consumer that receives output strings
+     */
+    public static void setOutputConsumer(Consumer<String> consumer) {
+        outputConsumer = consumer;
+    }
+
     /**
      * Echo command - prints arguments to output.
      */
     public static class EchoFunction implements ClishLibrary {
+        private Consumer<String> outputConsumer;
+
         @Override
         public String getName() {
             return "echo";
@@ -28,8 +41,23 @@ public class Builtins {
             String output = args.stream()
                 .map(Object::toString)
                 .collect(Collectors.joining(" "));
-            System.out.println(output);
-            return output;
+            sendOutput(output);
+            return output;  // Return output like unix echo
+        }
+
+        @Override
+        public void setOutputConsumer(Consumer<String> consumer) {
+            this.outputConsumer = consumer;
+        }
+
+        private void sendOutput(String output) {
+            if (outputConsumer != null) {
+                outputConsumer.accept(output);
+            } else if (Builtins.outputConsumer != null) {
+                Builtins.outputConsumer.accept(output);
+            } else {
+                System.out.println(output);
+            }
         }
     }
 
@@ -37,6 +65,8 @@ public class Builtins {
      * Print command - like echo but for debugging.
      */
     public static class PrintFunction implements ClishLibrary {
+        private Consumer<String> outputConsumer;
+
         @Override
         public String getName() {
             return "print";
@@ -44,12 +74,28 @@ public class Builtins {
 
         @Override
         public Object call(List<Object> args) {
+            StringBuilder sb = new StringBuilder();
             for (Object arg : args) {
-                System.out.print(arg);
-                System.out.print(" ");
+                if (sb.length() > 0) sb.append(" ");
+                sb.append(arg);
             }
-            System.out.println();
+            sendOutput(sb.toString());
             return null;
+        }
+
+        @Override
+        public void setOutputConsumer(Consumer<String> consumer) {
+            this.outputConsumer = consumer;
+        }
+
+        private void sendOutput(String output) {
+            if (outputConsumer != null) {
+                outputConsumer.accept(output);
+            } else if (Builtins.outputConsumer != null) {
+                Builtins.outputConsumer.accept(output);
+            } else {
+                System.out.println(output);
+            }
         }
     }
 
@@ -57,6 +103,8 @@ public class Builtins {
      * Printf command - formatted printing.
      */
     public static class PrintfFunction implements ClishLibrary {
+        private Consumer<String> outputConsumer;
+
         @Override
         public String getName() {
             return "printf";
@@ -67,8 +115,24 @@ public class Builtins {
             if (args.isEmpty()) return null;
             String format = args.get(0).toString();
             Object[] formatArgs = args.subList(1, args.size()).toArray();
-            System.out.printf(format, formatArgs);
+            String output = String.format(format, formatArgs);
+            sendOutput(output);
             return null;
+        }
+
+        @Override
+        public void setOutputConsumer(Consumer<String> consumer) {
+            this.outputConsumer = consumer;
+        }
+
+        private void sendOutput(String output) {
+            if (outputConsumer != null) {
+                outputConsumer.accept(output);
+            } else if (Builtins.outputConsumer != null) {
+                Builtins.outputConsumer.accept(output);
+            } else {
+                System.out.println(output);
+            }
         }
     }
 
