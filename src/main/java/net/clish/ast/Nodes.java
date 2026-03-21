@@ -639,3 +639,316 @@ class AssignmentNode extends BaseNode {
         return "Assignment";
     }
 }
+
+// ==================== Error Handling Nodes ====================
+
+// ok(value) - Create success result
+class OkExpressionNode extends BaseNode {
+    private final ASTNode value;
+
+    public OkExpressionNode(Token token, ASTNode value) {
+        super(token);
+        this.value = value;
+    }
+
+    public ASTNode getValue() {
+        return value;
+    }
+
+    @Override
+    public String getType() {
+        return "OkExpression";
+    }
+}
+
+// err(message) or err(message, code) - Create error result
+class ErrExpressionNode extends BaseNode {
+    private final ASTNode message;
+    private final ASTNode code;  // optional, null if not provided
+
+    public ErrExpressionNode(Token token, ASTNode message, ASTNode code) {
+        super(token);
+        this.message = message;
+        this.code = code;
+    }
+
+    public ASTNode getMessage() {
+        return message;
+    }
+
+    public ASTNode getCode() {
+        return code;
+    }
+
+    @Override
+    public String getType() {
+        return "ErrExpression";
+    }
+}
+
+// expression? - Error propagation
+class ErrorPropagationNode extends BaseNode {
+    private final ASTNode expression;
+
+    public ErrorPropagationNode(Token token, ASTNode expression) {
+        super(token);
+        this.expression = expression;
+    }
+
+    public ASTNode getExpression() {
+        return expression;
+    }
+
+    @Override
+    public String getType() {
+        return "ErrorPropagation";
+    }
+}
+
+// try { } catch(e) { } finally { } - Try/catch/finally statement
+class TryStatementNode extends BaseNode {
+    private final List<ASTNode> tryBlock;
+    private final String catchVariable;
+    private final List<ASTNode> catchBlock;
+    private final List<ASTNode> finallyBlock;  // optional, null if not provided
+
+    public TryStatementNode(Token token, List<ASTNode> tryBlock,
+                           String catchVariable, List<ASTNode> catchBlock,
+                           List<ASTNode> finallyBlock) {
+        super(token);
+        this.tryBlock = tryBlock;
+        this.catchVariable = catchVariable;
+        this.catchBlock = catchBlock;
+        this.finallyBlock = finallyBlock;
+    }
+
+    public List<ASTNode> getTryBlock() {
+        return tryBlock;
+    }
+
+    public String getCatchVariable() {
+        return catchVariable;
+    }
+
+    public List<ASTNode> getCatchBlock() {
+        return catchBlock;
+    }
+
+    public List<ASTNode> getFinallyBlock() {
+        return finallyBlock;
+    }
+
+    @Override
+    public String getType() {
+        return "TryStatement";
+    }
+}
+
+// ==================== Concurrency Nodes ====================
+
+// channel() or channel(bufferSize) - Create a channel
+class ChannelNode extends BaseNode {
+    private final ASTNode bufferSize;  // optional, null for unbuffered
+
+    public ChannelNode(Token token, ASTNode bufferSize) {
+        super(token);
+        this.bufferSize = bufferSize;
+    }
+
+    public ASTNode getBufferSize() {
+        return bufferSize;
+    }
+
+    @Override
+    public String getType() {
+        return "Channel";
+    }
+}
+
+// send(channel, value) - Send to channel
+class SendNode extends BaseNode {
+    private final ASTNode channel;
+    private final ASTNode value;
+
+    public SendNode(Token token, ASTNode channel, ASTNode value) {
+        super(token);
+        this.channel = channel;
+        this.value = value;
+    }
+
+    public ASTNode getChannel() {
+        return channel;
+    }
+
+    public ASTNode getValue() {
+        return value;
+    }
+
+    @Override
+    public String getType() {
+        return "Send";
+    }
+}
+
+// receive(channel) - Blocking receive from channel
+class ReceiveNode extends BaseNode {
+    private final ASTNode channel;
+
+    public ReceiveNode(Token token, ASTNode channel) {
+        super(token);
+        this.channel = channel;
+    }
+
+    public ASTNode getChannel() {
+        return channel;
+    }
+
+    @Override
+    public String getType() {
+        return "Receive";
+    }
+}
+
+// tryReceive(channel) - Non-blocking receive
+class TryReceiveNode extends BaseNode {
+    private final ASTNode channel;
+
+    public TryReceiveNode(Token token, ASTNode channel) {
+        super(token);
+        this.channel = channel;
+    }
+
+    public ASTNode getChannel() {
+        return channel;
+    }
+
+    @Override
+    public String getType() {
+        return "TryReceive";
+    }
+}
+
+// spawn { block } - Spawn background task
+class SpawnNode extends BaseNode {
+    private final List<ASTNode> block;
+
+    public SpawnNode(Token token, List<ASTNode> block) {
+        super(token);
+        this.block = block;
+    }
+
+    public List<ASTNode> getBlock() {
+        return block;
+    }
+
+    @Override
+    public String getType() {
+        return "Spawn";
+    }
+}
+
+// wait or wait(jobId) - Wait for job(s)
+class WaitNode extends BaseNode {
+    private final ASTNode jobId;  // optional, null for wait all
+
+    public WaitNode(Token token, ASTNode jobId) {
+        super(token);
+        this.jobId = jobId;
+    }
+
+    public ASTNode getJobId() {
+        return jobId;
+    }
+
+    @Override
+    public String getType() {
+        return "Wait";
+    }
+}
+
+// $! - Last job ID
+class JobIdNode extends BaseNode {
+    public JobIdNode(Token token) {
+        super(token);
+    }
+
+    @Override
+    public String getType() {
+        return "JobId";
+    }
+}
+
+// coproc NAME { block } - Create co-process
+class CoprocNode extends BaseNode {
+    private final String name;
+    private final List<ASTNode> block;
+
+    public CoprocNode(Token token, String name, List<ASTNode> block) {
+        super(token);
+        this.name = name;
+        this.block = block;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public List<ASTNode> getBlock() {
+        return block;
+    }
+
+    @Override
+    public String getType() {
+        return "Coproc";
+    }
+}
+
+// coprocAccess.in/out/pid - Access co-process channels
+class CoprocAccessNode extends BaseNode {
+    private final ASTNode coproc;
+    private final String member;  // "in", "out", or "pid"
+
+    public CoprocAccessNode(Token token, ASTNode coproc, String member) {
+        super(token);
+        this.coproc = coproc;
+        this.member = member;
+    }
+
+    public ASTNode getCoproc() {
+        return coproc;
+    }
+
+    public String getMember() {
+        return member;
+    }
+
+    @Override
+    public String getType() {
+        return "CoprocAccess";
+    }
+}
+
+// expr | expr - Pipe operator
+class PipeNode extends BaseNode {
+    private final ASTNode left;
+    private final ASTNode right;
+
+    public PipeNode(Token token, ASTNode left, ASTNode right) {
+        super(token);
+        this.left = left;
+        this.right = right;
+    }
+
+    public ASTNode getLeft() {
+        return left;
+    }
+
+    public ASTNode getRight() {
+        return right;
+    }
+
+    @Override
+    public String getType() {
+        return "Pipe";
+    }
+}

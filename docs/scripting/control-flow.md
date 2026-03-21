@@ -148,3 +148,78 @@ function findItem(items, target) {
     return false
 }
 ```
+
+## try / catch / finally
+
+Exception-style error handling for Result errors:
+
+```clish
+try {
+    let result = riskyOperation()
+    echo "Operation succeeded"
+} catch (e) {
+    echo "Caught error: " + e.message
+} finally {
+    echo "Always runs"
+}
+```
+
+### Catch Variable
+
+The catch block receives the error Result:
+
+```clish
+try {
+    failingFunction()
+} catch (e) {
+    if (e.code == 404) {
+        echo "Not found"
+    } else {
+        echo "Error: " + e.message
+    }
+}
+```
+
+### finally Block (Optional)
+
+```clish
+try {
+    openResource()
+} catch (e) {
+    echo "Failed"
+} finally {
+    closeResource()  # Always executes
+}
+```
+
+## Spawn / Wait (Concurrency)
+
+### Spawn Background Task
+
+```clish
+spawn {
+    echo "Running in background"
+    time.sleep(1000)
+}
+```
+
+### Wait for Jobs
+
+```clish
+# Wait for all spawned jobs
+wait
+
+# Wait for specific job
+let jobId = $!
+wait(jobId)
+```
+
+### Job ID ($!)
+
+`$!` returns the ID of the last spawned background job:
+
+```clish
+spawn { longTask() }
+let lastJob = $!
+wait(lastJob)
+```

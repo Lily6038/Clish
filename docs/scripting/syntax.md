@@ -91,7 +91,9 @@ Variables are scoped to their block:
 The following cannot be used as identifiers:
 
 ```
-if, elif, else, for, while, function, return, local, true, false, null
+if, elif, else, for, while, function, return, local, true, false, null,
+try, catch, finally, ok, err, spawn, wait, channel, send, receive,
+coproc
 ```
 
 ## Line Structure

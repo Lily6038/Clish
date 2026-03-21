@@ -127,6 +127,12 @@ public class Parser {
         if (match(TokenType.CONTINUE)) {
             return continueStatement();
         }
+        if (match(TokenType.TRY)) {
+            return tryStatement();
+        }
+        if (match(TokenType.SPAWN)) {
+            return spawnStatement();
+        }
         if (match(TokenType.LBRACE)) {
             // Block statement
             List<ASTNode> statements = new ArrayList<>();
@@ -283,6 +289,46 @@ public class Parser {
         return new ContinueStatementNode(continueToken);
     }
 
+    private ASTNode tryStatement() {
+        consume(TokenType.LBRACE, "Expected '{' before try block");
+        loopDepth++;
+        List<ASTNode> tryBlock = block();
+        loopDepth--;
+
+        String catchVariable = null;
+        List<ASTNode> catchBlock = new ArrayList<>();
+        List<ASTNode> finallyBlock = null;
+
+        if (match(TokenType.CATCH)) {
+            consume(TokenType.LPAREN, "Expected '(' after 'catch'");
+            Token varToken = consume(TokenType.IDENTIFIER, "Expected variable name in catch");
+            catchVariable = varToken.getLiteral();
+            consume(TokenType.RPAREN, "Expected ')' after catch variable");
+            consume(TokenType.LBRACE, "Expected '{' before catch block");
+            loopDepth++;
+            catchBlock = block();
+            loopDepth--;
+        }
+
+        if (match(TokenType.FINALLY)) {
+            consume(TokenType.LBRACE, "Expected '{' before finally block");
+            loopDepth++;
+            finallyBlock = block();
+            loopDepth--;
+        }
+
+        return new TryStatementNode(null, tryBlock, catchVariable, catchBlock, finallyBlock);
+    }
+
+    private ASTNode spawnStatement() {
+        Token spawnToken = previous();
+        consume(TokenType.LBRACE, "Expected '{' before spawn block");
+        functionDepth++;
+        List<ASTNode> block = block();
+        functionDepth--;
+        return new SpawnNode(spawnToken, block);
+    }
+
     private ASTNode expressionStatement() {
         ASTNode expr = expression();
         match(TokenType.SEMICOLON);
@@ -310,11 +356,34 @@ public class Parser {
     // ==================== Expression Parsing ====================
 
     private ASTNode expression() {
-        return assignment();
+        return pipe();
+    }
+
+    // Pipe: lowest precedence (below assignment)
+    private ASTNode pipe() {
+        ASTNode left = assignment();
+
+        while (match(TokenType.PIPE)) {
+            ASTNode right = assignment();
+            left = new PipeNode(previous(), left, right);
+        }
+
+        return left;
+    }
+
+    // Error propagation: expression?
+    private ASTNode errorPropagation() {
+        ASTNode expr = or();
+
+        if (match(TokenType.QUESTION)) {
+            return new ErrorPropagationNode(previous(), expr);
+        }
+
+        return expr;
     }
 
     private ASTNode assignment() {
-        ASTNode expr = ternary();
+        ASTNode expr = or();
 
         if (match(TokenType.ASSIGN)) {
             ASTNode value = assignment();
@@ -328,7 +397,7 @@ public class Parser {
     }
 
     private ASTNode ternary() {
-        ASTNode condition = or();
+        ASTNode condition = errorPropagation();
 
         if (match(TokenType.QUESTION)) {
             ASTNode thenExpr = ternary();
@@ -470,7 +539,53 @@ public class Parser {
             return new StringLiteralNode(previous());
         }
         if (match(TokenType.IDENTIFIER)) {
-            return new IdentifierNode(previous());
+            return primaryAfterIdentifier();
+        }
+
+        // ok(expression) - Success result
+        if (match(TokenType.OK)) {
+            return okExpression();
+        }
+
+        // err(expression) or err(expression, expression) - Error result
+        if (match(TokenType.ERR)) {
+            return errExpression();
+        }
+
+        // channel() or channel(expression) - Create channel
+        if (match(TokenType.CHANNEL)) {
+            return channelExpression();
+        }
+
+        // wait or wait(expression) - Wait for job
+        if (match(TokenType.WAIT)) {
+            return waitExpression();
+        }
+
+        // send(channel, value) - Send to channel
+        if (match(TokenType.SEND)) {
+            return sendExpression();
+        }
+
+        // receive(channel) - Blocking receive
+        if (match(TokenType.RECEIVE)) {
+            return receiveExpression();
+        }
+
+        // tryReceive(channel) - Non-blocking receive
+        if (match(TokenType.TRY_RECEIVE)) {
+            return tryReceiveExpression();
+        }
+
+        // coproc name { block } - Create co-process
+        if (match(TokenType.COPROC)) {
+            return coprocExpression();
+        }
+
+        // $! - Job ID
+        if (match(TokenType.DOLLAR)) {
+            consume(TokenType.NOT, "Expected '!' after '$' for job ID");
+            return new JobIdNode(previous());
         }
 
         if (match(TokenType.LPAREN)) {
@@ -511,6 +626,133 @@ public class Parser {
         Token token = peek();
         error(token, "Unexpected token: " + token.getLiteral());
         return new NullLiteralNode(token);
+    }
+
+    // Handle identifier followed by .in/.out/.pid or other property access
+    private ASTNode primaryAfterIdentifier() {
+        ASTNode expr = new IdentifierNode(previous());
+
+        // Check for co-process access: identifier.in, identifier.out, identifier.pid
+        if (match(TokenType.DOT)) {
+            Token propertyToken = consume(TokenType.IDENTIFIER, "Expected property name");
+            String property = propertyToken.getLiteral();
+            if (property.equals("in") || property.equals("out") || property.equals("pid")) {
+                expr = new CoprocAccessNode(previous(), expr, property);
+            } else {
+                expr = new PropertyAccessNode(previous(), expr, property);
+            }
+        }
+
+        // Continue with call/index/property chain
+        while (true) {
+            if (match(TokenType.LPAREN)) {
+                List<ASTNode> arguments = new ArrayList<>();
+                if (!check(TokenType.RPAREN)) {
+                    do {
+                        arguments.add(expression());
+                    } while (match(TokenType.COMMA));
+                }
+                consume(TokenType.RPAREN, "Expected ')' after arguments");
+                expr = new CallExpressionNode(previous(), expr, arguments);
+            } else if (match(TokenType.LBRACKET)) {
+                ASTNode index = expression();
+                consume(TokenType.RBRACKET, "Expected ']' after index");
+                expr = new IndexExpressionNode(previous(), expr, index);
+            } else if (match(TokenType.DOT)) {
+                Token propertyToken = consume(TokenType.IDENTIFIER, "Expected property name");
+                String property = propertyToken.getLiteral();
+                if (property.equals("in") || property.equals("out") || property.equals("pid")) {
+                    expr = new CoprocAccessNode(previous(), expr, property);
+                } else {
+                    expr = new PropertyAccessNode(previous(), expr, property);
+                }
+            } else {
+                break;
+            }
+        }
+
+        return expr;
+    }
+
+    // ok(expression)
+    private ASTNode okExpression() {
+        consume(TokenType.LPAREN, "Expected '(' after 'ok'");
+        ASTNode value = expression();
+        consume(TokenType.RPAREN, "Expected ')' after ok value");
+        return new OkExpressionNode(previous(), value);
+    }
+
+    // err(expression) or err(expression, expression)
+    private ASTNode errExpression() {
+        consume(TokenType.LPAREN, "Expected '(' after 'err'");
+        ASTNode message = expression();
+        ASTNode code = null;
+        if (match(TokenType.COMMA)) {
+            code = expression();
+        }
+        consume(TokenType.RPAREN, "Expected ')' after err arguments");
+        return new ErrExpressionNode(previous(), message, code);
+    }
+
+    // channel() or channel(expression)
+    private ASTNode channelExpression() {
+        consume(TokenType.LPAREN, "Expected '(' after 'channel'");
+        ASTNode bufferSize = null;
+        if (!check(TokenType.RPAREN)) {
+            bufferSize = expression();
+        }
+        consume(TokenType.RPAREN, "Expected ')' after channel arguments");
+        return new ChannelNode(previous(), bufferSize);
+    }
+
+    // wait or wait(expression)
+    private ASTNode waitExpression() {
+        Token waitToken = previous();
+        ASTNode jobId = null;
+        if (!check(TokenType.LBRACE) && !check(TokenType.NEWLINE) && !check(TokenType.RBRACE) && !isAtEnd()) {
+            jobId = expression();
+        }
+        return new WaitNode(waitToken, jobId);
+    }
+
+    // receive(expression) or tryReceive(expression)
+    private ASTNode receiveExpression() {
+        Token token = previous();
+        consume(TokenType.LPAREN, "Expected '(' after receive");
+        ASTNode channel = expression();
+        consume(TokenType.RPAREN, "Expected ')' after receive channel");
+        return new ReceiveNode(token, channel);
+    }
+
+    private ASTNode tryReceiveExpression() {
+        Token token = previous();
+        consume(TokenType.LPAREN, "Expected '(' after tryReceive");
+        ASTNode channel = expression();
+        consume(TokenType.RPAREN, "Expected ')' after tryReceive channel");
+        return new TryReceiveNode(token, channel);
+    }
+
+    // send(expression, expression)
+    private ASTNode sendExpression() {
+        Token token = previous();
+        consume(TokenType.LPAREN, "Expected '(' after 'send'");
+        ASTNode channel = expression();
+        consume(TokenType.COMMA, "Expected ',' between send arguments");
+        ASTNode value = expression();
+        consume(TokenType.RPAREN, "Expected ')' after send arguments");
+        return new SendNode(token, channel, value);
+    }
+
+    // coproc IDENTIFIER { block }
+    private ASTNode coprocExpression() {
+        Token token = previous();
+        Token nameToken = consume(TokenType.IDENTIFIER, "Expected co-process name");
+        String name = nameToken.getLiteral();
+        consume(TokenType.LBRACE, "Expected '{' before co-process body");
+        functionDepth++;
+        List<ASTNode> block = block();
+        functionDepth--;
+        return new CoprocNode(token, name, block);
     }
 
     // ==================== Helper Methods ====================

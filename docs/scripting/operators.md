@@ -164,3 +164,52 @@ local result = condition ? valueIfTrue : valueIfFalse
 local age = 20
 local status = age >= 18 ? "adult" : "minor"
 ```
+
+## Error Propagation Operator
+
+The `?` operator propagates errors from Result-returning functions:
+
+```clish
+let result = mightFail()?
+```
+
+If `mightFail()` returns an error, the `?` operator returns that error immediately. If it returns ok, execution continues with the unwrapped value.
+
+### Example
+
+```clish
+function divide(a, b) {
+    if (b == 0) {
+        return err("Division by zero")
+    }
+    return ok(a / b)
+}
+
+function calculate() {
+    let result = divide(10, 2)?  # Returns early if error
+    return ok(result * 2)
+}
+```
+
+## Pipe Operator
+
+The `|` operator creates data flow pipelines:
+
+```clish
+let result = value | transformFunction | anotherTransform
+```
+
+### Example
+
+```clish
+let numbers = [1, 2, 3, 4, 5]
+
+let result = numbers | map(fn(x) { x * 2 }) | filter(fn(x) { x > 4 })
+# result = [6, 8, 10]
+```
+
+### Pipe with Error Propagation
+
+```clish
+let result = riskyValue | flatMap(fn(x) { process(x) })
+```

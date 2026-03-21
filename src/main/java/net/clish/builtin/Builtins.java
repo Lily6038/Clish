@@ -1,10 +1,8 @@
 package net.clish.builtin;
 
 import net.clish.ast.ClishLibrary;
+import net.clish.runtime.ResultType;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
@@ -242,6 +240,93 @@ public class Builtins {
     }
 
     /**
+     * IsOk function - returns true if result is Ok.
+     */
+    public static class IsOkFunction implements ClishLibrary {
+        @Override
+        public String getName() {
+            return "isOk";
+        }
+
+        @Override
+        public Object call(List<Object> args) {
+            if (args.isEmpty()) return false;
+            Object arg = args.get(0);
+            if (arg instanceof ResultType rt) {
+                return rt.isOk();
+            }
+            return false;
+        }
+    }
+
+    /**
+     * IsError function - returns true if result is Error.
+     */
+    public static class IsErrorFunction implements ClishLibrary {
+        @Override
+        public String getName() {
+            return "isError";
+        }
+
+        @Override
+        public Object call(List<Object> args) {
+            if (args.isEmpty()) return false;
+            Object arg = args.get(0);
+            if (arg instanceof ResultType rt) {
+                return rt.isError();
+            }
+            return false;
+        }
+    }
+
+    /**
+     * Unwrap function - returns value or throws if error.
+     */
+    public static class UnwrapFunction implements ClishLibrary {
+        @Override
+        public String getName() {
+            return "unwrap";
+        }
+
+        @Override
+        public Object call(List<Object> args) {
+            if (args.isEmpty()) throw new RuntimeException("unwrap requires 1 argument");
+            Object arg = args.get(0);
+            if (arg instanceof ResultType rt) {
+                if (rt.isError()) {
+                    throw new RuntimeException("Cannot unwrap error: " + rt.getMessage());
+                }
+                return rt.getValue();
+            }
+            return arg;
+        }
+    }
+
+    /**
+     * UnwrapOr function - returns value or default if error.
+     */
+    public static class UnwrapOrFunction implements ClishLibrary {
+        @Override
+        public String getName() {
+            return "unwrapOr";
+        }
+
+        @Override
+        public Object call(List<Object> args) {
+            if (args.size() < 2) throw new RuntimeException("unwrapOr requires 2 arguments");
+            Object arg = args.get(0);
+            Object defaultValue = args.get(1);
+            if (arg instanceof ResultType rt) {
+                if (rt.isOk()) {
+                    return rt.getValue();
+                }
+                return defaultValue;
+            }
+            return arg;
+        }
+    }
+
+    /**
      * Exit function - exits the script.
      */
     public static class ExitFunction implements ClishLibrary {
@@ -286,6 +371,10 @@ public class Builtins {
             new ToStringFunction(),
             new ToIntFunction(),
             new ToFloatFunction(),
+            new IsOkFunction(),
+            new IsErrorFunction(),
+            new UnwrapFunction(),
+            new UnwrapOrFunction(),
             new ExitFunction()
         );
     }

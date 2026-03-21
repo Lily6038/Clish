@@ -25,6 +25,22 @@ public enum TokenType {
     FALSE,
     NULL,
 
+    // Error handling keywords
+    TRY,
+    CATCH,
+    FINALLY,
+    OK,
+    ERR,
+
+    // Concurrency keywords
+    CHANNEL,
+    SEND,
+    RECEIVE,
+    TRY_RECEIVE,
+    SPAWN,
+    WAIT,
+    COPROC,
+
     // Operators
     PLUS,         // +
     MINUS,        // -
@@ -43,6 +59,7 @@ public enum TokenType {
     NOT,          // !
     QUESTION,     // ?
     COLON,        // :
+    PIPE,         // |
 
     // Delimiters
     LPAREN,       // (

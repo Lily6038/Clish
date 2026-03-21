@@ -189,6 +189,42 @@ exit(0)   # Normal exit
 exit(1)   # Error exit
 ```
 
+## Result-Returning Functions
+
+Functions that can fail should return a `Result` type using `ok()` or `err()`:
+
+```clish
+function divide(a, b) {
+    if (b == 0) {
+        return err("Division by zero")
+    }
+    return ok(a / b)
+}
+```
+
+### Using the `?` Operator
+
+Use `?` to propagate errors:
+
+```clish
+function calculate() {
+    let result = divide(10, 0)?
+    return ok(result * 2)
+}
+```
+
+### Without `?` (Explicit Handling)
+
+```clish
+function calculate() {
+    let result = divide(10, 0)
+    if (isError(result)) {
+        return result
+    }
+    return ok(unwrap(result) * 2)
+}
+```
+
 ### sleep
 
 Pause execution for a specified duration:

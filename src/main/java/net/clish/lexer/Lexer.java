@@ -1,6 +1,8 @@
 package net.clish.lexer;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -15,8 +17,15 @@ public class Lexer {
     private int lineStart = 0;
 
     private static final Set<String> KEYWORDS = new HashSet<>();
+    private static final Map<String, TokenType> KEYWORD_TO_TOKEN = new HashMap<>();
+
+    private static void addKeyword(String keyword, TokenType tokenType) {
+        KEYWORDS.add(keyword);
+        KEYWORD_TO_TOKEN.put(keyword, tokenType);
+    }
 
     static {
+        // Simple keywords that map via toUpperCase()
         KEYWORDS.add("if");
         KEYWORDS.add("else");
         KEYWORDS.add("elif");
@@ -31,6 +40,19 @@ public class Lexer {
         KEYWORDS.add("true");
         KEYWORDS.add("false");
         KEYWORDS.add("null");
+        KEYWORDS.add("try");
+        KEYWORDS.add("catch");
+        KEYWORDS.add("finally");
+        KEYWORDS.add("ok");
+        KEYWORDS.add("err");
+        KEYWORDS.add("channel");
+        KEYWORDS.add("send");
+        KEYWORDS.add("receive");
+        KEYWORDS.add("spawn");
+        KEYWORDS.add("wait");
+        KEYWORDS.add("coproc");
+        // Keywords with underscores in token name
+        addKeyword("tryReceive", TokenType.TRY_RECEIVE);
     }
 
     public Lexer(String source) {
@@ -166,7 +188,14 @@ public class Lexer {
         }
 
         String value = sb.toString();
-        TokenType type = KEYWORDS.contains(value) ? TokenType.valueOf(value.toUpperCase()) : TokenType.IDENTIFIER;
+        TokenType type;
+        if (KEYWORD_TO_TOKEN.containsKey(value)) {
+            type = KEYWORD_TO_TOKEN.get(value);
+        } else if (KEYWORDS.contains(value)) {
+            type = TokenType.valueOf(value.toUpperCase());
+        } else {
+            type = TokenType.IDENTIFIER;
+        }
 
         return new Token(type, value, line, startColumn);
     }

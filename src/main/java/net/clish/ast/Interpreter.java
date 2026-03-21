@@ -1,6 +1,10 @@
 package net.clish.ast;
 
 import net.clish.lexer.Token;
+import net.clish.runtime.Channel;
+import net.clish.runtime.CoProcess;
+import net.clish.runtime.JobManager;
+import net.clish.runtime.ResultType;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -13,6 +17,7 @@ public class Interpreter {
     private final Map<String, ClishFunction> globalFunctions = new HashMap<>();
     private final Map<String, ClishLibrary> libraries = new HashMap<>();
     private final Map<String, Object> globalVariables = new HashMap<>();
+    private final Map<String, CoProcess> coProcesses = new HashMap<>();
 
     private Scope globalScope;
     private long startTime;
@@ -119,7 +124,77 @@ public class Interpreter {
             throw new ContinueException();
         }
 
+        if (node instanceof TryStatementNode tryStmt) {
+            return executeTryStatement(tryStmt, scope);
+        }
+
+        if (node instanceof SpawnNode spawnNode) {
+            return executeSpawnStatement(spawnNode, scope);
+        }
+
         return null;
+    }
+
+    private Object executeTryStatement(TryStatementNode tryStmt, Scope scope) {
+        Object result = null;
+        try {
+            for (ASTNode stmt : tryStmt.getTryBlock()) {
+                try {
+                    executeStatement(stmt, scope);
+                } catch (ReturnException e) {
+                    throw e;
+                }
+            }
+        } catch (ReturnException e) {
+            result = e.getValue();
+        }
+
+        // If result is an error and we have a catch block, execute it
+        if (result instanceof ResultType rt && rt.isError()) {
+            if (tryStmt.getCatchBlock() != null && !tryStmt.getCatchBlock().isEmpty()) {
+                Scope catchScope = new Scope(scope);
+                catchScope.define(tryStmt.getCatchVariable(), rt);
+                for (ASTNode stmt : tryStmt.getCatchBlock()) {
+                    try {
+                        executeStatement(stmt, catchScope);
+                    } catch (ReturnException e) {
+                        throw e;
+                    }
+                }
+            }
+        }
+
+        // Execute finally block if present
+        if (tryStmt.getFinallyBlock() != null && !tryStmt.getFinallyBlock().isEmpty()) {
+            for (ASTNode stmt : tryStmt.getFinallyBlock()) {
+                try {
+                    executeStatement(stmt, scope);
+                } catch (ReturnException e) {
+                    throw e;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private Object executeSpawnStatement(SpawnNode spawnNode, Scope scope) {
+        // Create a copy of the current scope for the spawned task
+        final Scope spawnScope = new Scope(scope);
+        final List<ASTNode> block = new ArrayList<>(spawnNode.getBlock());
+
+        Runnable task = () -> {
+            for (ASTNode stmt : block) {
+                try {
+                    executeStatement(stmt, spawnScope);
+                } catch (ReturnException e) {
+                    // Ignore return in spawned tasks
+                }
+            }
+        };
+
+        int jobId = JobManager.spawn(task);
+        return jobId;
     }
 
     private Object executeIfStatement(IfStatementNode ifStmt, Scope scope) {
@@ -331,6 +406,155 @@ public class Interpreter {
             return properties;
         }
 
+        // Error handling nodes
+        if (node instanceof OkExpressionNode okExpr) {
+            Object value = evaluate(okExpr.getValue(), scope);
+            return ResultType.ok(value);
+        }
+
+        if (node instanceof ErrExpressionNode errExpr) {
+            Object message = evaluate(errExpr.getMessage(), scope);
+            if (errExpr.getCode() != null) {
+                Object code = evaluate(errExpr.getCode(), scope);
+                return ResultType.error(message.toString(), ((Number) code).intValue());
+            }
+            return ResultType.error(message.toString());
+        }
+
+        if (node instanceof ErrorPropagationNode errorProp) {
+            Object result = evaluate(errorProp.getExpression(), scope);
+            if (result instanceof ResultType rt) {
+                if (rt.isError()) {
+                    throw new ReturnException(rt);
+                }
+                return rt.getValue();
+            }
+            // If not a Result, return as-is
+            return result;
+        }
+
+        // Concurrency nodes
+        if (node instanceof ChannelNode channelNode) {
+            int bufferSize = 0;
+            if (channelNode.getBufferSize() != null) {
+                Object size = evaluate(channelNode.getBufferSize(), scope);
+                bufferSize = ((Number) size).intValue();
+            }
+            return new Channel(bufferSize);
+        }
+
+        if (node instanceof SendNode sendNode) {
+            Object channelObj = evaluate(sendNode.getChannel(), scope);
+            Object value = evaluate(sendNode.getValue(), scope);
+            if (channelObj instanceof Channel ch) {
+                try {
+                    ch.send(value);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            return null;
+        }
+
+        if (node instanceof ReceiveNode receiveNode) {
+            Object channelObj = evaluate(receiveNode.getChannel(), scope);
+            if (channelObj instanceof Channel ch) {
+                try {
+                    return ch.receive();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        if (node instanceof TryReceiveNode tryReceiveNode) {
+            Object channelObj = evaluate(tryReceiveNode.getChannel(), scope);
+            if (channelObj instanceof Channel ch) {
+                return ch.tryReceive();
+            }
+            return null;
+        }
+
+        if (node instanceof WaitNode waitNode) {
+            if (waitNode.getJobId() != null) {
+                Object jobIdObj = evaluate(waitNode.getJobId(), scope);
+                int jobId = ((Number) jobIdObj).intValue();
+                try {
+                    JobManager.waitFor(jobId);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            } else {
+                try {
+                    JobManager.waitForAll();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+            return null;
+        }
+
+        if (node instanceof JobIdNode) {
+            return JobManager.getLastJobId();
+        }
+
+        if (node instanceof CoprocNode coprocNode) {
+            String name = coprocNode.getName();
+            Channel in = new Channel();
+            Channel out = new Channel();
+            // Pre-create the CoProcess with a placeholder PID, will update after spawn
+            CoProcess coproc = new CoProcess(name, in, out, 0);
+            coProcesses.put(name, coproc);
+            scope.define(name, coproc);
+
+            int pid = JobManager.spawn(() -> {
+                // Set up self reference for the coproc
+                Scope coprocScope = new Scope(scope);
+                coprocScope.define("self", coproc);
+                for (ASTNode stmt : coprocNode.getBlock()) {
+                    try {
+                        executeStatement(stmt, coprocScope);
+                    } catch (ReturnException e) {
+                        break;
+                    }
+                }
+            });
+            // Update with actual PID
+            coProcesses.put(name, new CoProcess(name, in, out, pid));
+            return coproc;
+        }
+
+        if (node instanceof CoprocAccessNode coprocAccess) {
+            Object coprocObj = evaluate(coprocAccess.getCoproc(), scope);
+            if (coprocObj instanceof CoProcess coproc) {
+                switch (coprocAccess.getMember()) {
+                    case "in": return coproc.in;
+                    case "out": return coproc.out;
+                    case "pid": return coproc.pid;
+                }
+            }
+            return null;
+        }
+
+        if (node instanceof PipeNode pipeNode) {
+            Object left = evaluate(pipeNode.getLeft(), scope);
+            Object right = evaluate(pipeNode.getRight(), scope);
+            // Pipe: pass left as first argument to right if right is callable
+            if (right instanceof ClishFunction func) {
+                List<Object> args = new ArrayList<>();
+                args.add(left);
+                return callFunction(func, args, scope);
+            }
+            if (right instanceof ClishLibrary library) {
+                List<Object> args = new ArrayList<>();
+                args.add(left);
+                return library.call(args);
+            }
+            return right;
+        }
+
         return null;
     }
 
@@ -473,6 +697,7 @@ public class Interpreter {
         if (value instanceof String) return !((String) value).isEmpty();
         if (value instanceof List) return !((List<?>) value).isEmpty();
         if (value instanceof Map) return !((Map<?, ?>) value).isEmpty();
+        if (value instanceof ResultType rt) return rt.isOk();
         return true;
     }
 
